@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Бинго-карта — просмотр</title>
+<style>
+  :root{--ink:#1b2430;}
+  *{box-sizing:border-box;}
+  body{font-family:"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);margin:0;background:#f4f5f7;}
+  header{padding:14px 22px 8px;}
+  h1{margin:0 0 4px;font-size:21px;}
+  .sub{color:#556;font-size:13px;margin-bottom:8px;}
+  .tools button{margin-right:8px;padding:6px 12px;border:1px solid #99a;border-radius:6px;background:#fff;cursor:pointer;font-size:13px;}
+  .filters{padding:0 22px 10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+  #q{padding:7px 10px;border:1px solid #aab;border-radius:6px;font-size:13px;width:280px;}
+  .chip{padding:5px 10px;border:1px solid #aab;border-radius:14px;background:#fff;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;gap:6px;}
+  .chip i{width:9px;height:9px;border-radius:50%;display:inline-block;}
+  .chip.on{background:#1b2430;color:#fff;border-color:#1b2430;}
+  .stats{font-size:12.5px;color:#445;margin-left:auto;}
+  #mapwrap{padding:0 22px 12px;}
+  #map{position:relative;background:#fff;border:1px solid #ccd;overflow:hidden;}
+  .cell{position:absolute;box-sizing:border-box;}
+  .grp{background:#fafbfd;border:1px solid #b8c0cc;}
+  .ghead{height:24px;line-height:24px;color:#fff;font-weight:600;font-size:12px;padding:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .leaf{border:1px solid #b9c2cf;border-left-width:4px;cursor:pointer;overflow:hidden;}
+  .leaf:hover{outline:2px solid #3567d6;z-index:9;}
+  .inner{padding:5px 7px;height:100%;display:flex;flex-direction:column;}
+  .nm{font-weight:700;line-height:1.15;}
+  .st{font-size:.78em;color:#333;margin-top:3px;display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden;}
+  .st i{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none;}
+  .ds{margin-top:4px;color:#333;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;}
+  .st-ctl{background:#e8f5e9;border-left-color:#2e7d32;}
+  .st-proc{background:#fff3e0;border-left-color:#b26a00;}
+  .st-proj{background:#e3f2fd;border-left-color:#1565c0;}
+  .st-wait{background:#f3e5f5;border-left-color:#6a1b9a;}
+  #tblwrap{padding:0 22px 12px;}
+  table{width:100%;border-collapse:collapse;background:#fff;font-size:13px;}
+  th,td{border:1px solid #ccd;padding:6px 8px;text-align:left;vertical-align:top;}
+  th{background:#e8ecf3;cursor:pointer;user-select:none;position:sticky;top:0;}
+  td.w{white-space:nowrap;font-weight:600;}
+  .tag{padding:2px 8px;border-radius:10px;font-size:11px;white-space:nowrap;display:inline-block;}
+  #card{position:fixed;inset:0;background:rgba(20,28,40,.45);display:flex;align-items:center;justify-content:center;z-index:50;}
+  #card[hidden]{display:none;}
+  .cbox{background:#fff;border-radius:12px;max-width:560px;width:92%;padding:18px 20px;box-shadow:0 12px 40px rgba(0,0,0,.3);}
+  .cbox h3{margin:6px 0 10px;font-size:18px;}
+  .cmeta{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12px;}
+  .cbox p{font-size:13.5px;line-height:1.45;color:#333;}
+  .cbox .crow{margin-top:8px;font-size:13px;}
+  #appendix{margin:16px 22px;padding:16px 20px;border:1px solid #ccd;background:#fff;}
+  #appendix h2{margin:0 0 10px;font-size:17px;}
+  .ag{margin-bottom:12px;break-inside:avoid;}
+  .ag h3{margin:0 0 4px;font-size:14px;}
+  .ad{font-size:12px;color:#333;line-height:1.35;}
+  .ag li{margin-bottom:5px;font-size:12px;}
+  .note{margin-top:12px;padding-top:10px;border-top:1px solid #ccd;font-size:11.5px;color:#445;}
+  @media print{
+    @page{size:A4 landscape;margin:9mm;}
+    body{background:#fff;}
+    .filters,#card{display:none!important;}
+    header{padding:0 0 6px;}
+    h1{font-size:16px;} .sub{font-size:10px;}
+    .tools{display:none;}
+    #mapwrap{padding:0;}
+    #tblwrap{display:none!important;}
+    #appendix{margin:0;border:0;padding:0;break-before:page;}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="ttl"></h1>
+  <div class="sub" id="sub"></div>
+  <div class="tools">
+    <button onclick="window.print()">🖨 Печать (A4 альбомная)</button>
+    <button id="viewToggle">☰ Таблица</button>
+  </div>
+</header>
+<div class="filters">
+  <input id="q" placeholder="Поиск по названию и тексту…">
+  <span id="statusChips"></span>
+  <span id="groupChips"></span>
+  <span class="stats" id="stats"></span>
+</div>
+<div id="mapwrap"><div id="map"></div></div>
+<div id="tblwrap" hidden><table id="tbl"></table></div>
+<div id="appendix"></div>
+<div id="card" hidden><div class="cbox">
+  <div class="cmeta"><span class="tag" id="c-g"></span><span class="tag" id="c-s"></span></div>
+  <h3 id="c-n"></h3>
+  <div class="crow" id="c-w"></div>
+  <p id="c-d"></p>
+  <div class="crow"><button onclick="closeCard()">Закрыть</button></div>
+</div></div>
+<script>
+const DATA={"meta": {"built": "2026-10-26", "title": "Бинго-карта видеоигровой индустрии · горизонт 2030"}, "groups": [{"id": "A", "name": "Госструктуры и право (вертикаль)", "w": 40, "desc": "Федеральный закон о поддержке индустрии видеоигр: статус отрасли, налоговые льготы, госзаказ, экспериментальные правовые режимы. Якорь всей вертикали.", "color": "#1f3a5f"}, {"id": "B", "name": "Отраслевая ассоциация", "w": 20, "desc": "Единый голос индустрии: участие в нормотворчестве, стандарты, экспертиза для госорганов, международное представительство (VIDO). Точка сборки всех контуров карты.", "color": "#00695c"}, {"id": "C", "name": "Деньги: инвестиционный контур", "w": 45, "desc": "Государственный фонд нового типа: долевые инвестиции + гранты в одном окне. Заявка прорабатывается; увязать с нацпроектными деньгами.", "color": "#5f3a1f"}, {"id": "D", "name": "Игры гордости (флагманы)", "w": 25, "desc": "Продолжение мирового хита (Mundfish): витрина технологического уровня, экспортная выручка, имидж отрасли.", "color": "#7b1f1f"}, {"id": "E", "name": "Крупные компании (выручка >0,5 млрд ₽)", "w": 25, "desc": "Леста, Аструм, Фогейм, Блэк Хаб и др.: консолидация издательских функций — локализация, маркетинг, дистрибуция, финансирование студий.", "color": "#4a1f5f"}, {"id": "F", "name": "Платформа и дистрибуция", "w": 20, "desc": "Отечественная платформа UGC-контента: проект готов, требуется ~3 млрд ₽ на 3 года. Магазин + UGC + редактор + социальные функции.", "color": "#1f4a5f"}, {"id": "G", "name": "Медиа и повестка", "w": 14, "desc": "Флагманское игровое медиа холдинга: задаёт экспертную рамку отрасли.", "color": "#3a5f1f"}, {"id": "H", "name": "Кадры и низовые ниши", "w": 12, "desc": "Микрогранты (0,5–3 млн ₽) на прототипы: вузовские команды, геймджемы, школьные студии. Воронка для Indie GO Старт и грантов ИРИ.", "color": "#455a64"}], "items": [{"gid": "A", "id": "A1", "name": "Закон об игровой индустрии", "status": "proj", "w": 16, "desc": "Федеральный закон о поддержке индустрии видеоигр: статус отрасли, налоговые льготы, госзаказ, экспериментальные правовые режимы. Якорь всей вертикали."}, {"gid": "A", "id": "A2", "name": "Исполнительская вертикаль", "status": "proc", "w": 9, "desc": "Одна подконтрольная линия вместо развилки: вице-премьер-куратор → министр (Минцифры) → профильный департамент/дирекция по видеоиграм → подведомственные институты. Ориентиры: институт развития-регулирования по образцу ЕРАИ, фонд — по образцу Фонда кино (справка ППК «Росгеймдев», 2026)."}, {"gid": "A", "id": "A3", "name": "Депутаты-союзники (ГД и СФ)", "status": "proc", "w": 9, "desc": "Межфракционная группа в Госдуме и Совете Федерации: доклады, парламентские слушания, поправки. Плацдарм — профильный комитет по информационной политике."}, {"gid": "A", "id": "A4", "name": "Комиссия по играм при ИРИ", "status": "ctl", "w": 6, "desc": "Комиссия по видеоиграм при Институте развития интернета — под контролем: приоритеты грантов и нацпроектных заказов проходят через неё."}, {"gid": "B", "id": "B1", "name": "РВИ — отраслевая ассоциация", "status": "ctl", "w": 20, "desc": "Единый голос индустрии: участие в нормотворчестве, стандарты, экспертиза для госорганов, международное представительство (VIDO). Точка сборки всех контуров карты."}, {"gid": "C", "id": "C1", "name": "Новый госфонд (инвест + гранты)", "status": "proj", "w": 12, "desc": "Государственный фонд нового типа: долевые инвестиции + гранты в одном окне. Заявка прорабатывается; увязать с нацпроектными деньгами."}, {"gid": "C", "id": "C2", "name": "Indie GO 2 (венчур)", "status": "proc", "w": 12, "desc": "Второй фонд линейки Indie GO — идёт сбор (цель ₽5 млрд). Формула: коинвест с госфондом, выход через выручку и M&A."}, {"gid": "C", "id": "C3", "name": "Indie GO Старт (Ростелеком)", "status": "proc", "w": 8, "desc": "Грантовая программа ранних стадий. Бюджет освоен на ~20% — ускорить выборку и донабрать пул заявок."}, {"gid": "C", "id": "C4", "name": "Прямые инвестиции (быстрый возврат)", "status": "ctl", "w": 9, "desc": "Портфель проектов с зарубежной выручкой: казуальные, мобильные, F2P-ниши. Функция — быстрые возвраты, кэшфлоу контура."}, {"gid": "C", "id": "C5", "name": "Гранты ИРИ", "status": "ctl", "w": 4, "desc": "Гранты на игровые проекты через комиссию ИРИ (блок A4): регулярные наборы, приоритет — флагманам и прототипам."}, {"gid": "D", "id": "D1", "name": "Atomic Heart 2", "status": "proc", "w": 7, "desc": "Продолжение мирового хита (Mundfish): витрина технологического уровня, экспортная выручка, имидж отрасли."}, {"gid": "D", "id": "D2", "name": "«Война миров»", "status": "proj", "w": 5, "desc": "Национальный флагман глобального конфликта — стратегия нового поколения."}, {"gid": "D", "id": "D3", "name": "Исторические патриотические шутеры", "status": "proj", "w": 5, "desc": "Сюжетные кампании по реальным событиям; связки с кино и медиафраншизами, образовательные версии."}, {"gid": "D", "id": "D4", "name": "RTS-класса Broken Arrow", "status": "proj", "w": 4, "desc": "Современный RTS: соревновательный режим, киберспорт, экспортный потенциал."}, {"gid": "D", "id": "D5", "name": "Симуляторы («грузовики», спецтехника)", "status": "proj", "w": 4, "desc": "Гарантированная аудитория симуляторов: грузовики, сельхоз- и строительная техника; устойчивая выручка."}, {"gid": "E", "id": "E1", "name": "Издатели", "status": "ctl", "w": 12, "desc": "Леста, Аструм, Фогейм, Блэк Хаб и др.: консолидация издательских функций — локализация, маркетинг, дистрибуция, финансирование студий."}, {"gid": "E", "id": "E2", "name": "Разработчики", "status": "proc", "w": 13, "desc": "CarX Technologies, Mundfish и другие студии с выручкой >0,5 млрд ₽: база для M&A, фондовых историй и публичных кейсов успеха."}, {"gid": "F", "id": "F1", "name": "Национальная UGC-платформа", "status": "proj", "w": 14, "desc": "Отечественная платформа UGC-контента: проект готов, требуется ~3 млрд ₽ на 3 года. Магазин + UGC + редактор + социальные функции."}, {"gid": "F", "id": "F2", "name": "Сбер / домен games.ru", "status": "wait", "w": 6, "desc": "Комплементарная связка с экосистемой Сбера (домен games.ru). Ждём ответа по партнёрству; альтернатива — самостоятельный запуск."}, {"gid": "G", "id": "G1", "name": "Игромания", "status": "ctl", "w": 4, "desc": "Флагманское игровое медиа холдинга: задаёт экспертную рамку отрасли."}, {"gid": "G", "id": "G2", "name": "Канобу", "status": "ctl", "w": 3, "desc": "Медиа об игровой и кино-культуре (100% АО ИФСИ): массовый сегмент аудитории."}, {"gid": "G", "id": "G3", "name": "АйДжиЭн, Стопгейм", "status": "proc", "w": 3, "desc": "Нишевые медиа: партнёрские форматы, синдикация контента, совместные спецпроекты."}, {"gid": "G", "id": "G4", "name": "«Доигрались» (TG)", "status": "ctl", "w": 4, "desc": "Телеграм-канал «первого абзаца»: повестка для отрасли, госструктур и СМИ."}, {"gid": "H", "id": "H1", "name": "Гранты вузам и юным командам", "status": "proj", "w": 6, "desc": "Микрогранты (0,5–3 млн ₽) на прототипы: вузовские команды, геймджемы, школьные студии. Воронка для Indie GO Старт и грантов ИРИ."}, {"gid": "H", "id": "H2", "name": "Движки и инструменты *", "status": "proj", "w": 6, "desc": "Экспертная добавка: льготы и госзаказ под отечественные движки/SDK — иначе контроль верхних контуров не удержится технологически."}]};
+const ST={ctl:{t:'под контролем',c:'#2e7d32'},proc:{t:'в процессе',c:'#b26a00'},proj:{t:'проект',c:'#1565c0'},wait:{t:'ждём решения',c:'#6a1b9a'}};
+let q='',stFilter=null,grpFilter=null,view='map',sortKey='id',sortDir=1;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const gid=id=>DATA.groups.find(g=>g.id===id);
+function inset(r,m){return{x:r.x+m,y:r.y+m,w:r.w-2*m,h:r.h-2*m};}
+function setBox(el,r){el.style.left=r.x+'px';el.style.top=r.y+'px';el.style.width=r.w+'px';el.style.height=r.h+'px';}
+function visible(){
+  return DATA.items.filter(it=>{
+    if(stFilter&&it.status!==stFilter)return false;
+    if(grpFilter&&it.gid!==grpFilter)return false;
+    if(q){const s=(it.name+' '+it.desc+' '+(gid(it.gid)||{}).name).toLowerCase();if(!s.includes(q.toLowerCase()))return false;}
+    return true;
+  });
+}
+function layout(items,rect){
+  if(!items||!items.length)return[];
+  const arr=[...items].sort((a,b)=>(b.w||0)-(a.w||0));
+  if(arr.length===1)return[{n:arr[0],r:rect}];
+  const total=arr.reduce((s,x)=>s+(x.w||0),0);
+  let acc=0,k=0;
+  for(let i=0;i<arr.length-1;i++){acc+=(arr[i].w||0);if(acc*2>=total){k=i+1;break;}}
+  if(k<1)k=1;if(k>=arr.length)k=arr.length-1;
+  const f=arr.slice(0,k).reduce((s,x)=>s+(x.w||0),0)/total;
+  let r1,r2;
+  if(rect.w>=rect.h){r1={x:rect.x,y:rect.y,w:rect.w*f,h:rect.h};r2={x:rect.x+r1.w,y:rect.y,w:rect.w-r1.w,h:rect.h};}
+  else{r1={x:rect.x,y:rect.y,w:rect.w,h:rect.h*f};r2={x:rect.x,y:rect.y+r1.h,w:rect.w,h:rect.h-r1.h};}
+  return[...layout(arr.slice(0,k),r1),...layout(arr.slice(k),r2)];
+}
+function renderMap(){
+  const W=1120,H=760,map=$('map');map.style.width=W+'px';map.style.height=H+'px';map.innerHTML='';
+  const vis=visible();
+  const groups=DATA.groups.map(g=>({g,items:vis.filter(i=>i.gid===g.id)})).filter(x=>x.items.length);
+  groups.forEach(x=>x.w=x.items.reduce((s,i)=>s+i.w,0));
+  layout(groups,{x:0,y:0,w:W,h:H}).forEach(({n:x,r:rect})=>{
+    const ge=document.createElement('div');ge.className='cell grp';setBox(ge,inset(rect,2));
+    const hd=document.createElement('div');hd.className='ghead';hd.style.background=x.g.color||'#445';
+    hd.textContent=x.g.name+' — вес '+x.w;ge.appendChild(hd);map.appendChild(ge);
+    const inner={x:rect.x+5,y:rect.y+29,w:rect.w-10,h:rect.h-34};
+    layout(x.items,inner).forEach(({n,r})=>{
+      const el=document.createElement('div');el.className='cell leaf st-'+(n.status||'proj');setBox(el,inset(r,2));
+      const fs=Math.max(9,Math.min(15,Math.sqrt(r.w*r.h)/8));
+      const s=ST[n.status]||ST.proj;
+      const d=document.createElement('div');d.className='inner';d.style.fontSize=fs+'px';
+      d.innerHTML='<div class="nm">'+esc(n.name)+'</div><div class="st"><i style="background:'+s.c+'"></i>'+s.t+' · вес '+n.w+'</div>'
+        +(r.w*r.h>9500?'<div class="ds">'+esc(n.desc)+'</div>':'');
+      el.title='Клик — карточка блока';el.onclick=()=>openCard(n.id);
+      el.appendChild(d);map.appendChild(el);
+    });
+  });
+}
+function renderTable(){
+  const vis=[...visible()].sort((a,b)=>{
+    let va,vb;
+    if(sortKey==='id'){va=a.id;vb=b.id;return va.localeCompare(vb)*sortDir;}
+    if(sortKey==='group'){va=(gid(a.gid)||{}).name||'';vb=(gid(b.gid)||{}).name||'';return va.localeCompare(vb)*sortDir;}
+    if(sortKey==='status'){va=(ST[a.status]||{}).t||'';vb=(ST[b.status]||{}).t||'';return va.localeCompare(vb)*sortDir;}
+    va=a[sortKey];vb=b[sortKey];
+    if(typeof va==='number')return(va-vb)*sortDir;
+    return String(va).localeCompare(String(vb))*sortDir;
+  });
+  const cols=[['id','Код'],['name','Блок'],['group','Контур'],['status','Статус'],['w','Вес'],['desc','Текст / пояснение']];
+  let h='<thead><tr>'+cols.map(c=>'<th data-k="'+c[0]+'">'+c[1]+(sortKey===c[0]?(sortDir>0?' ▲':' ▼'):'')+'</th>').join('')+'</tr></thead><tbody>';
+  vis.forEach(it=>{
+    const g=gid(it.gid)||{},s=ST[it.status]||ST.proj;
+    h+='<tr><td class="w">'+esc(it.id)+'</td><td><b>'+esc(it.name)+'</b></td><td>'+esc(g.name||'')+'</td>'
+      +'<td><span class="tag" style="background:'+s.c+'22;color:'+s.c+'">'+s.t+'</span></td>'
+      +'<td class="w">'+it.w+'</td><td>'+esc(it.desc)+'</td></tr>';
+  });
+  h+='</tbody>';
+  const t=$('tbl');t.innerHTML=h;
+  t.querySelectorAll('th').forEach(th=>th.onclick=()=>{
+    const k=th.dataset.k;if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=k==='w'?-1:1;}renderTable();
+  });
+}
+function applyFilters(){renderMap();renderTable();stats();}
+function stats(){
+  const vis=visible(),tw=DATA.items.reduce((s,i)=>s+i.w,0),vw=vis.reduce((s,i)=>s+i.w,0);
+  $('stats').textContent='Показано '+vis.length+' из '+DATA.items.length+' блоков · вес '+vw+' из '+tw;
+}
+function chips(){
+  $('statusChips').innerHTML='<span class="chip'+(stFilter===null?' on':'')+'" data-s="">Все статусы</span>'
+    +Object.entries(ST).map(([k,v])=>'<span class="chip'+(stFilter===k?' on':'')+'" data-s="'+k+'"><i style="background:'+v.c+'"></i>'+v.t+'</span>').join('');
+  $('groupChips').innerHTML='<span class="chip'+(grpFilter===null?' on':'')+'" data-g="">Все контуры</span>'
+    +DATA.groups.map(g=>'<span class="chip'+(grpFilter===g.id?' on':'')+'" data-g="'+g.id+'"><i style="background:'+g.color+'"></i>'+esc(g.name)+'</span>').join('');
+  document.querySelectorAll('#statusChips .chip').forEach(c=>c.onclick=()=>{stFilter=c.dataset.s||null;chips();applyFilters();});
+  document.querySelectorAll('#groupChips .chip').forEach(c=>c.onclick=()=>{grpFilter=c.dataset.g||null;chips();applyFilters();});
+}
+function openCard(id){
+  const it=DATA.items.find(i=>i.id===id);if(!it)return;
+  const g=gid(it.gid)||{},s=ST[it.status]||ST.proj;
+  $('c-g').textContent=g.name||'';$('c-g').style.background=g.color||'#445';$('c-g').style.color='#fff';
+  $('c-s').textContent=s.t;$('c-s').style.background=s.c+'22';$('c-s').style.color=s.c;
+  $('c-n').textContent=it.id+' · '+it.name;
+  $('c-w').innerHTML='Вес (ёмкость): <b>'+it.w+'</b> · контур «'+esc(g.name||'')+'» · код '+it.id;
+  $('c-d').textContent=it.desc||'';
+  $('card').hidden=false;
+}
+function closeCard(){$('card').hidden=true;}
+function buildAppendix(){
+  let h='<h2>Пояснения к блокам (приложение к печати)</h2>';
+  DATA.groups.forEach(g=>{
+    h+='<div class="ag"><h3>'+esc(g.name)+' · вес '+g.w+'</h3>';
+    if(g.desc)h+='<p class="ad">'+esc(g.desc)+'</p>';
+    h+='<ul>';
+    DATA.items.filter(i=>i.gid===g.id).forEach(it=>{
+      const s=ST[it.status]||ST.proj;
+      h+='<li><b>'+esc(it.name)+'</b> ('+it.id+') — '+s.t+' · вес '+it.w+'<div class="ad">'+esc(it.desc||'')+'</div></li>';
+    });
+    h+='</ul></div>';
+  });
+  h+='<div class="note"><b>Как читать.</b> Площадь блока ∝ весу (политико-экономическая ёмкость). Статусы: зелёный — под контролем; оранжевый — в процессе; синий — проект; фиолетовый — ждём решения. Источник истины — Excel «Бинго-карта_видеоигровой_индустрии.xlsx»; страница — только просмотр и анализ. Построено: '+DATA.meta.built+'.</div>';
+  $('appendix').innerHTML=h;
+}
+$('q').oninput=e=>{q=e.target.value.trim();applyFilters();};
+$('viewToggle').onclick=()=>{
+  if(view==='map'){view='tbl';$('mapwrap').hidden=true;$('tblwrap').hidden=false;$('viewToggle').textContent='▦ Карта';}
+  else{view='map';$('mapwrap').hidden=false;$('tblwrap').hidden=true;$('viewToggle').textContent='☰ Таблица';}
+};
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeCard();});
+$('card').onclick=e=>{if(e.target.id==='card')closeCard();};
+window.onbeforeprint=()=>{if(view==='tbl'){view='map';$('mapwrap').hidden=false;$('tblwrap').hidden=true;$('viewToggle').textContent='☰ Таблица';}const m=$('map');m.style.width='1030px';m.style.height='685px';renderMap();};
+window.onafterprint=()=>{const m=$('map');m.style.width='1120px';m.style.height='760px';renderMap();};
+$('ttl').textContent=DATA.meta.title;
+$('sub').textContent='Только просмотр · редактирование — в Excel · построено '+DATA.meta.built+' · ' + DATA.items.length + ' блоков, ' + DATA.groups.length + ' контуров';
+chips();buildAppendix();applyFilters();
+</script>
+</body>
+</html>
