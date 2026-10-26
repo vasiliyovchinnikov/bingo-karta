@@ -123,7 +123,7 @@ function layout(items,rect){
   return[...layout(arr.slice(0,k),r1),...layout(arr.slice(k),r2)];
 }
 function renderMap(){
-  const W=1120,H=760,map=$('map');map.style.width=W+'px';map.style.height=H+'px';map.innerHTML='';
+  const W=1120,H=860,map=$('map');map.style.width=W+'px';map.style.height=H+'px';map.innerHTML='';
   const vis=visible();
   const groups=DATA.groups.map(g=>({g,items:vis.filter(i=>i.gid===g.id)})).filter(x=>x.items.length);
   groups.forEach(x=>x.w=x.items.reduce((s,i)=>s+i.w,0));
@@ -215,7 +215,7 @@ $('viewToggle').onclick=()=>{
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeCard();});
 $('card').onclick=e=>{if(e.target.id==='card')closeCard();};
 window.onbeforeprint=()=>{if(view==='tbl'){view='map';$('mapwrap').hidden=false;$('tblwrap').hidden=true;$('viewToggle').textContent='☰ Таблица';}const m=$('map');m.style.width='1030px';m.style.height='685px';renderMap();};
-window.onafterprint=()=>{const m=$('map');m.style.width='1120px';m.style.height='760px';renderMap();};
+window.onafterprint=()=>{const m=$('map');m.style.width='1120px';m.style.height='860px';renderMap();};
 $('ttl').textContent=DATA.meta.title;
 $('sub').textContent='Только просмотр · редактирование — в Excel · построено '+DATA.meta.built+' · ' + DATA.items.length + ' блоков, ' + DATA.groups.length + ' контуров';
 chips();buildAppendix();applyFilters();
