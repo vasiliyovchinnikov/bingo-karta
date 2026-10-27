@@ -29,9 +29,12 @@
   .st{font-size:.78em;color:#333;margin-top:3px;display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden;}
   .st i{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none;}
   .ds{margin-top:4px;color:#333;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;}
-  .st-ctl{background:#e8f5e9;
-  .st-proc{background:#fff3e0;
-  .st-proj{background:#e3f2fd;
+  .st-ctl{background:#e8f5e9;}
+  .st-proc{background:#fff3e0;}
+  .st-proj{background:#e3f2fd;}
+  #tip{position:fixed;z-index:60;max-width:380px;background:#141c28;color:#fff;border-radius:8px;padding:10px 13px;font-size:12.5px;line-height:1.45;box-shadow:0 10px 34px rgba(0,0,0,.45);pointer-events:none;display:none;}
+  #tip .tn{font-weight:700;font-size:13px;margin-bottom:3px;}
+  #tip .tm{font-size:11px;opacity:.85;margin-bottom:6px;}
 
   #tblwrap{padding:0 22px 12px;}
   table{width:100%;border-collapse:collapse;background:#fff;font-size:13px;}
@@ -84,6 +87,7 @@
 <div id="mapwrap"><div id="map"></div></div>
 <div id="tblwrap" hidden><table id="tbl"></table></div>
 <div id="appendix"></div>
+<div id="tip"><div class="tn"></div><div class="tm"></div><div class="td2"></div></div>
 <div id="card" hidden><div class="cbox">
   <div class="cmeta"><span class="tag" id="c-g"></span><span class="tag" id="c-s"></span></div>
   <h3 id="c-n"></h3>
@@ -139,7 +143,13 @@ function renderMap(){
       const d=document.createElement('div');d.className='inner';d.style.fontSize=fs+'px';
       d.innerHTML='<div class="nm">'+esc(n.name)+'</div><div class="st"><i style="background:'+s.c+'"></i>'+s.t+' · вес '+n.w+'</div>'
         +(r.w*r.h>9500?'<div class="ds">'+esc(n.desc)+'</div>':'');
-      el.title='Клик — карточка блока';el.onclick=()=>openCard(n.id);
+      el.title='';el.onclick=()=>openCard(n.id);
+      el.onmouseenter=e=>showTip(n,e.clientX,e.clientY);
+      el.onmousemove=e=>moveTip(e.clientX,e.clientY);
+      el.onmouseleave=hideTip;
+      el.addEventListener('touchstart',e=>{lpTimer=setTimeout(()=>{lpTimer=null;showTip(n,e.touches[0].clientX,e.touches[0].clientY);},450);},{passive:true});
+      el.addEventListener('touchmove',()=>{if(lpTimer){clearTimeout(lpTimer);lpTimer=null;}},{passive:true});
+      el.addEventListener('touchend',e=>{if(lpTimer){clearTimeout(lpTimer);lpTimer=null;}else if(tipOn){e.preventDefault();hideTip();}},{passive:false});
       el.appendChild(d);map.appendChild(el);
     });
   });
@@ -181,6 +191,22 @@ function chips(){
   document.querySelectorAll('#statusChips .chip').forEach(c=>c.onclick=()=>{stFilter=c.dataset.s||null;chips();applyFilters();});
   document.querySelectorAll('#groupChips .chip').forEach(c=>c.onclick=()=>{grpFilter=c.dataset.g||null;chips();applyFilters();});
 }
+const tip=$('tip');let lpTimer=null,tipOn=false;
+function showTip(n,x,y){
+  const g=gid(n.gid)||{},s=ST[n.status]||ST.proj;
+  tip.querySelector('.tn').textContent=n.name;
+  tip.querySelector('.tm').innerHTML='<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+s.c+';margin-right:5px;"></span>'+s.t+' · вес '+n.w+' · '+esc(g.name||'')+' ('+n.id+')';
+  tip.querySelector('.td2').textContent=n.desc||'';
+  tip.style.display='block';tipOn=true;moveTip(x,y);
+}
+function moveTip(x,y){
+  const pad=14,tw=tip.offsetWidth,th=tip.offsetHeight;
+  let tx=x+pad,ty=y+pad;
+  if(tx+tw>window.innerWidth-8)tx=window.innerWidth-8-tw;
+  if(ty+th>window.innerHeight-8)ty=y-th-pad;
+  tip.style.left=Math.max(8,tx)+'px';tip.style.top=Math.max(8,ty)+'px';
+}
+function hideTip(){tip.style.display='none';tipOn=false;}
 function openCard(id){
   const it=DATA.items.find(i=>i.id===id);if(!it)return;
   const g=gid(it.gid)||{},s=ST[it.status]||ST.proj;
