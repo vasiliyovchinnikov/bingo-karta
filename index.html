@@ -57,15 +57,24 @@
   .ag li{margin-bottom:5px;font-size:12px;}
   .note{margin-top:12px;padding-top:10px;border-top:1px solid #ccd;font-size:11.5px;color:#445;}
   @media print{
-    @page{size:A4 landscape;margin:9mm;}
-    body{background:#fff;}
-    .filters,#card{display:none!important;}
-    header{padding:0 0 6px;}
-    h1{font-size:16px;} .sub{font-size:10px;}
-    .tools{display:none;}
-    #mapwrap{padding:0;}
+    @page{size:A4 landscape;margin:8mm;}
+    body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .filters,.tools,#card,#tip{display:none!important;}
+    header{padding:0 0 3px;}
+    h1{font-size:13px;margin:0;}
+    .sub{font-size:9px;margin:1px 0 0;}
+    #mapwrap{padding:0;break-after:page;}
+    #map{overflow:hidden;}
+    .cell .ds{display:none;}
+    .inner .st{font-size:8px;}
     #tblwrap{display:none!important;}
-    #appendix{margin:0;border:0;padding:0;break-before:page;}
+    #appendix{margin:0;border:0;padding:0;columns:2;column-gap:24px;font-size:11px;}
+    #appendix h2{font-size:13px;margin:0 0 6px;}
+    .ag{margin-bottom:8px;}
+    .ag h3{font-size:11px;margin:0 0 2px;}
+    .ad{font-size:9.5px;line-height:1.3;}
+    .ag li{margin-bottom:3px;font-size:9.5px;}
+    .note{margin-top:6px;padding-top:5px;font-size:9px;}
   }
 </style>
 </head>
@@ -126,8 +135,11 @@ function layout(items,rect){
   else{r1={x:rect.x,y:rect.y,w:rect.w,h:rect.h*f};r2={x:rect.x,y:rect.y+r1.h,w:rect.w,h:rect.h-r1.h};}
   return[...layout(arr.slice(0,k),r1),...layout(arr.slice(k),r2)];
 }
+const SCREEN_SIZE=[1120,860],PRINT_SIZE=[990,645];let printMode=false;
+window.addEventListener('beforeprint',()=>{printMode=true;const m=$('map');m.style.width=PRINT_SIZE[0]+'px';m.style.height=PRINT_SIZE[1]+'px';renderMap();});
+window.addEventListener('afterprint',()=>{printMode=false;const m=$('map');m.style.width=SCREEN_SIZE[0]+'px';m.style.height=SCREEN_SIZE[1]+'px';renderMap();});
 function renderMap(){
-  const W=1120,H=860,map=$('map');map.style.width=W+'px';map.style.height=H+'px';map.innerHTML='';
+  const W=printMode?PRINT_SIZE[0]:SCREEN_SIZE[0],H=printMode?PRINT_SIZE[1]:SCREEN_SIZE[1],map=$('map');map.style.width=W+'px';map.style.height=H+'px';map.innerHTML='';
   const vis=visible();
   const groups=DATA.groups.map(g=>({g,items:vis.filter(i=>i.gid===g.id)})).filter(x=>x.items.length);
   groups.forEach(x=>x.w=x.items.reduce((s,i)=>s+i.w,0));
@@ -240,8 +252,7 @@ $('viewToggle').onclick=()=>{
 };
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeCard();});
 $('card').onclick=e=>{if(e.target.id==='card')closeCard();};
-window.onbeforeprint=()=>{if(view==='tbl'){view='map';$('mapwrap').hidden=false;$('tblwrap').hidden=true;$('viewToggle').textContent='☰ Таблица';}const m=$('map');m.style.width='1030px';m.style.height='685px';renderMap();};
-window.onafterprint=()=>{const m=$('map');m.style.width='1120px';m.style.height='860px';renderMap();};
+window.onbeforeprint=()=>{if(view==='tbl'){view='map';$('mapwrap').hidden=false;$('tblwrap').hidden=true;$('viewToggle').textContent='☰ Таблица';}};
 $('ttl').textContent=DATA.meta.title;
 $('sub').textContent='Только просмотр · редактирование — в Excel · построено '+DATA.meta.built+' · ' + DATA.items.length + ' блоков, ' + DATA.groups.length + ' контуров';
 chips();buildAppendix();applyFilters();
