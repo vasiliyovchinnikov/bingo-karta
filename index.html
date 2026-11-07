@@ -21,14 +21,14 @@
   #map{position:relative;background:#fff;border:1px solid #ccd;overflow:hidden;}
   .cell{position:absolute;box-sizing:border-box;}
   .grp{background:#fafbfd;border:1px solid #b8c0cc;}
-  .ghead{height:24px;line-height:24px;color:#fff;font-weight:600;font-size:12px;padding:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .ghead{height:21px;line-height:21px;color:#fff;font-weight:600;font-size:12px;padding:0 7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .leaf{border:1px solid #b9c2cf;cursor:pointer;overflow:hidden;}
   .leaf:hover{outline:2px solid #3567d6;z-index:9;}
-  .inner{padding:5px 7px;height:100%;display:flex;flex-direction:column;}
+  .inner{padding:3px 5px;height:100%;display:flex;flex-direction:column;}
   .nm{font-weight:700;line-height:1.15;}
   .st{font-size:.78em;color:#333;margin-top:3px;display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden;}
   .st i{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none;}
-  .ds{margin-top:4px;color:#333;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;}
+  .ds{margin-top:3px;color:#333;font-size:12px;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;}
   .st-ctl{background:#e8f5e9;}
   .st-proc{background:#fff3e0;}
   .st-proj{background:#e3f2fd;}
@@ -152,14 +152,14 @@ function renderMap(){
     const ge=document.createElement('div');ge.className='cell grp';setBox(ge,inset(rect,2));
     const hd=document.createElement('div');hd.className='ghead';hd.style.background=x.g.color||'#445';
     hd.textContent=x.g.name+' — вес '+x.w;ge.appendChild(hd);map.appendChild(ge);
-    const inner={x:rect.x+5,y:rect.y+29,w:rect.w-10,h:rect.h-34};
+    const inner={x:rect.x+4,y:rect.y+26,w:rect.w-8,h:rect.h-30};
     layout(x.items,inner).forEach(({n,r})=>{
       const el=document.createElement('div');el.className='cell leaf st-'+(n.status||'proj');setBox(el,inset(r,2));
       const fs=Math.max(9,Math.min(15,Math.sqrt(r.w*r.h)/8));
       const s=ST[n.status]||ST.proj;
       const d=document.createElement('div');d.className='inner';d.style.fontSize=fs+'px';
       d.innerHTML='<div class="nm">'+esc(n.name)+'</div><div class="st"><i style="background:'+s.c+'"></i>'+s.t+' · вес '+n.w+'</div>'
-        +(r.w*r.h>9500?'<div class="ds">'+esc(n.desc)+'</div>':'');
+        +(r.w*r.h>7000?'<div class="ds">'+esc(n.desc)+'</div>':'');
       el.title='';el.onclick=()=>openCard(n.id);
       el.onmouseenter=e=>showTip(n,e.clientX,e.clientY);
       el.onmousemove=e=>moveTip(e.clientX,e.clientY);
